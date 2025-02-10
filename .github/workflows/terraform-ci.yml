@@ -12,7 +12,7 @@ jobs:
   terraform-validate:
     name: "Terraform Validate (Dev)"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: startsWith(github.ref, 'refs/heads/dev') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout Repository
@@ -70,7 +70,7 @@ jobs:
   terraform-destroy:
     name: "Terraform Destroy (Destroy Branch)"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/destroy'
+    if: startsWith(github.ref, 'refs/heads/destroy') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout Repository
