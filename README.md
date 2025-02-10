@@ -1,13 +1,4 @@
-# TechChallenge
-Hello World!
-
-## 10 Feb 2025
-Setup AWS, first thing to do was IAM and create a secondary account.
-Never use root for anything other than inial login. 
-Generate API credentials for AWS CLI.  Generate AWS IAM account for Github access, disable console, challenge: no policy for EKS.
-Gave full admin access (security risk, probs want to fix later //TODO)
-
-## Planning
+# Planning
 
 🔹 Phase 1: VPC & Networking Setup
 Goal: Set up a VPC with one public and one private subnet to serve as the foundation for the infrastructure.
@@ -27,8 +18,8 @@ Goal: Deploy an EC2 instance in the private subnet, install MongoDB, and enable 
 ✅ Configure automated MongoDB backups to an S3 bucket
 ✅ Attach an IAM Role to the EC2 instance with S3 backup permissions
 ✅ Set up a security group that allows:
-
 SSH from the internet (for admin access)
+
 MongoDB access only within the VPC
 🔹 Phase 3: S3 Bucket for Backups
 Goal: Create an S3 bucket that holds MongoDB backups and make it publicly readable.
@@ -71,5 +62,20 @@ Goal: Ensure everything is deployed automatically using Terraform and GitHub Act
 Deploy VPC, EC2, S3, and EKS using Terraform
 Build and deploy web application container to EKS
 ✅ Ensure Terraform state management (e.g., S3 backend for Terraform state)
+
+## To do
+- Reserve domain & configure (important / urgent due to DNS sync)
+
+## Time commitment
+| Phase | Focus Area                                      | Estimated Effort |
+|-------|-----------------------------------------------|------------------|
+| 1     | Set up VPC and networking                     | 1 day            |
+| 2     | Deploy EC2 MongoDB                            | 1 day            |
+| 3     | Configure S3 bucket for backups               | 0.5 days         |
+| 4     | Build a simple web application                | 1-2 days         |
+| 5     | Deploy the app on Kubernetes (EKS)           | 2 days           |
+| 6     | Enable AWS Config & showcase misconfigurations | 0.5 days         |
+| 7     | Automate everything with Terraform & GitHub Actions | 1-2 days  |
+
 
 
