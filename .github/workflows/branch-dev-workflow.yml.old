@@ -1,0 +1,69 @@
+# GitHub Action - Dev branch
+name: Workflow - Dev Branch
+
+# Conditions for running the workflow.
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+  workflow_dispatch:
+
+jobs:
+  verify_prerequisites:
+    runs-on: self-hosted
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify AWS CLI
+        run: aws --version
+
+      - name: Verify Terraform
+        run: terraform version
+
+  download_repository:
+    runs-on: self-hosted
+
+    steps:
+      - name: Retrieve the repository
+        uses: actions/checkout@v4
+
+  terraform_deploy:
+    runs-on: self-hosted
+    needs: [download_repository, verify_prerequisites]
+
+    steps:
+      - name: Retrieve the repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Initialize Terraform
+        run: terraform init
+
+#      - name: Validate Terraform configuration
+#        run: terraform validate
+
+      - name: Plan Terraform deployment
+        run: terraform plan -out=tfplan
+
+      - name: Apply Terraform changes
+        run: terraform apply -auto-approve tfplan
+
+      - name: Wait for 2 minutes before destroying infrastructure
+        run: sleep 120
+
+      - name: Destroy Terraform resources
+        run: terraform destroy -auto-approve
+
