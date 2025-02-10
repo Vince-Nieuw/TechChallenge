@@ -1,4 +1,4 @@
-# Github Action - Dev branch
+# GitHub Action - Dev branch
 name: Workflow - Dev Branch
 
 # Conditions for running the workflow.
@@ -20,11 +20,23 @@ jobs:
       - name: Print additional statements
         run: |
           echo "This is an extra echo statement!"
-          echo "Self-hosted runner werkt correct."
+          echo "Self-hosted runner is working correctly."
+
+  verify_prerequisites:
+    runs-on: self-hosted
+    needs: download_repository  # Ensures repo is checked out first
+
+    steps:
+      - name: Verify AWS CLI
+        run: aws --version || echo "AWS CLI is not installed!"
+
+      - name: Verify Terraform
+        run: terraform version || echo "Terraform is not installed!"
 
   download_repository:
     runs-on: self-hosted
 
     steps:
-      - name: Retreive the repository
+      - name: Retrieve the repository
         uses: actions/checkout@v4
+
