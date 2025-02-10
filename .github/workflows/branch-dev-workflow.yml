@@ -1,5 +1,5 @@
-# Github Action - Print Hello World
-name: Hello World
+# Github Action - Dev branch
+name: Workflow - Dev Branch
 
 # Conditions for running the workflow.
 on:
