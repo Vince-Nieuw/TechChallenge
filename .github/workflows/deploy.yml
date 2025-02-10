@@ -14,14 +14,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
-	runs-on: self-hosted
 
       - name: Print 'Hello World' 
         run: echo "Hello World!!!" 
-        runs-on: self-hosted
 
+      - name: Verify Terraform 
+        run: echo "Is terraform present?"
