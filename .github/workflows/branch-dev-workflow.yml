@@ -10,28 +10,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  bunch_of_echo_statements:
-    runs-on: self-hosted
-
-    steps:
-      - name: Print 'Hello World'
-        run: echo "Hello World!!!"
-
-      - name: Print additional statements
-        run: |
-          echo "This is an extra echo statement!"
-          echo "Self-hosted runner is working correctly."
-
   verify_prerequisites:
     runs-on: self-hosted
-    needs: download_repository  # Ensures repo is checked out first
 
     steps:
       - name: Verify AWS CLI
-        run: aws --version || echo "AWS CLI is not installed!"
+        run: aws --version
 
       - name: Verify Terraform
-        run: terraform version || echo "Terraform is not installed!"
+        run: terraform version
 
   download_repository:
     runs-on: self-hosted
