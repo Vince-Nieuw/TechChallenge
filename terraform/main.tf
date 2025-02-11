@@ -18,7 +18,7 @@ module "ec2-mongodb" {
   source            = "./modules/ec2-mongodb"
   vpc_id            = module.network.vpc_id
   private_subnet_id = module.network.private_subnet_id
-  mongodb_s3_bucket = "your-backup-bucket-name" # Ensure this matches your desired S3 bucket
+  mongodb_s3_bucket = "mongodb-s3-bucket-qwerty2291"  
 }
 
 output "mongodb_instance_id" {
