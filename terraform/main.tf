@@ -1,55 +1,56 @@
-# Terraform/main.tf
+# Provider Configuration (already in providers.tf)
 
-provider "aws" {
+# Variables Declaration
+variable "mongodb_admin_user" {
+  description = "MongoDB admin username"
+  type        = string
 }
 
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+variable "mongodb_admin_password" {
+  description = "MongoDB admin password"
+  type        = string
 }
 
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "eu-north-1a"
-  map_public_ip_on_launch = true
+# Networking Module
+module "networking" {
+  source = "./modules/networking"
 }
 
-resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-north-1a"
+# S3 Backup Module
+module "s3_backup" {
+  source      = "./modules/s3_backup"
+  bucket_name = "mongodb-backup-bucket-unique-12345"
 }
 
-resource "aws_security_group" "mongodb_sg" {
-  name        = "mongodb-sg"
-  description = "Allow MongoDB traffic"
-  vpc_id      = aws_vpc.main.id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 27017
-    to_port     = 27017
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
+# MongoDB EC2 Module
+module "mongodb_ec2" {
+  source             = "./modules/mongodb_ec2"
+  vpc_id             = module.networking.vpc_id
+  private_subnet_id  = module.networking.private_subnet_id
+  mongodb_admin_user = var.mongodb_admin_user
+  mongodb_admin_password = var.mongodb_admin_password
+  security_group_id  = module.networking.mongodb_sg_id
 }
 
-resource "aws_s3_bucket" "mongodb_backup" {
-  bucket = "mongodb-backup-bucket-unique-12345"
+# Bastion Host Module
+module "bastion" {
+  source            = "./modules/bastion"
+  vpc_id            = module.networking.vpc_id
+  public_subnet_id  = module.networking.public_subnet_id
+  security_group_id = module.networking.mongodb_sg_id
 }
 
-module "ec2-mongodb" {
-  source            = "./modules/ec2-mongodb"
-  vpc_id            = aws_vpc.main.id
-  private_subnet_id = aws_subnet.private.id
-  public_subnet_id  = aws_subnet.public.id
-  mongodb_s3_bucket = aws_s3_bucket.mongodb_backup.id
+# EKS Module
+module "eks" {
+  source            = "./modules/eks"
+  vpc_id            = module.networking.vpc_id
+  public_subnet_id  = module.networking.public_subnet_id
+  private_subnet_id = module.networking.private_subnet_id
+}
+
+# AWS Config Module
+module "aws_config" {
+  source = "./modules/aws_config"
+  role_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+}
 
