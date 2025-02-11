@@ -8,3 +8,8 @@ variable "private_subnet_id" {
   type        = string
 }
 
+variable "mongodb_s3_bucket" {
+  description = "The name of the S3 bucket for MongoDB backups"
+  type        = string
+}
+
