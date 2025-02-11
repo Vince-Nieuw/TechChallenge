@@ -1,6 +1,10 @@
+resource "aws_key_pair" "mongodb_key" {
+  key_name   = "mongodb-key"
+  public_key = file("~/.ssh/id_rsa.pub") 
+}
 
 resource "aws_instance" "mongodb" {
-  ami           = "ami-08b1d20c6a69a7100"  # Ubuntu 22.04 AMI for eu-north-1
+  ami           = "ami-08b1d20c6a69a7100"  #Ubuntu (same as Github runner) 
   instance_type = "t3.micro"
   subnet_id     = var.private_subnet_id
   vpc_security_group_ids = [aws_security_group.mongodb_sg.id]
@@ -25,6 +29,16 @@ resource "aws_instance" "mongodb" {
 
   tags = {
     Name = "MongoDB-Server"
+  }
+}
+
+resource "aws_s3_bucket" "mongodb_backup" {
+  bucket = var.mongodb_s3_bucket
+  acl    = "private"
+  force_destroy = true
+
+  tags = {
+    Name = "MongoDB Backup Bucket"
   }
 }
 
@@ -64,7 +78,7 @@ resource "aws_instance" "bastion" {
 resource "aws_security_group" "bastion_sg" {
   vpc_id = var.vpc_id
 
-# Probably should not do this. 
+# Curious if AWS Config or Wiz will pick this up. //TODO fix open to internet. 
   ingress {
     from_port   = 22
     to_port     = 22
