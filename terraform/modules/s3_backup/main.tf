@@ -1,5 +1,5 @@
 # ===========================
-#  Variable Declaration
+#  Variables
 # ===========================
 
 variable "bucket_name" {
@@ -20,8 +20,8 @@ resource "aws_s3_bucket" "mongodb_backup" {
   }
 }
 
-# Make the S3 bucket publicly readable (per assignment requirements)
-resource "aws_s3_bucket_public_access_block" "public_access" {
+# Disable Block Public Access for the S3 Bucket
+resource "aws_s3_bucket_public_access_block" "mongodb_backup_access" {
   bucket                  = aws_s3_bucket.mongodb_backup.id
   block_public_acls       = false
   block_public_policy     = false

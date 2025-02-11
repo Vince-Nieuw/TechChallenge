@@ -1,16 +1,5 @@
 # Provider Configuration (already in providers.tf)
 
-# Variables Declaration
-variable "mongodb_admin_user" {
-  description = "MongoDB admin username"
-  type        = string
-}
-
-variable "mongodb_admin_password" {
-  description = "MongoDB admin password"
-  type        = string
-}
-
 # Networking Module
 module "networking" {
   source = "./modules/networking"
@@ -50,7 +39,7 @@ module "eks" {
 
 # AWS Config Module
 module "aws_config" {
-  source = "./modules/aws_config"
-  role_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+  source          = "./modules/aws_config"
+  s3_bucket_name = module.s3_backup.s3_bucket_name 
 }
 
