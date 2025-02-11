@@ -1,3 +1,5 @@
+# TechChallenge/terraform/modules/ec2-mongodb/main.tf
+
 resource "aws_security_group" "mongodb_sg" {
   vpc_id = var.vpc_id
 

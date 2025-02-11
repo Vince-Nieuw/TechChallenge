@@ -1,3 +1,5 @@
+# TechChallenge/terraform/modules/ec2-mongodb/variables.tf
+
 variable "vpc_id" {
   description = "The ID of the VPC where the EC2 instance will be deployed"
   type        = string
