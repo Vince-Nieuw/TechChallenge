@@ -28,3 +28,11 @@ aws dynamodb create-table \
 ```
 
 20:58, great success! [See pic 1.png]
+
+
+# 11 Feb 2025
+
+Lets go! Focus on VPC. Done, not a lot of constraints. Find a template on google and let's go next.
+Also registered domain, so got that out of the way. The domain is `vince-techchallenge.com` and cost 14 dollars. Registered using AWS s3 so I don't have to fix the DNS-servers. 
+Decided not to use terraform, not worth the hassle. Will likely regret this down the road.
+
