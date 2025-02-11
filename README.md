@@ -1,3 +1,9 @@
+
+#
+Build status
+
+[![Terraform CI/CD Pipeline](https://github.com/Vince-Nieuw/TechChallenge/actions/workflows/terraform-ci.yml/badge.svg?branch=main)](https://github.com/Vince-Nieuw/TechChallenge/actions/workflows/terraform-ci.yml)
+
 # Planning
 
 🔹 Phase 1: VPC & Networking Setup
