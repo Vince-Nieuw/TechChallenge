@@ -1,64 +1,53 @@
-## 📄 terraform/main.tf
-
-variable "vpc_id" {
-  description = "The ID of the VPC where the EC2 instance will be deployed"
-  type        = string
+provider "aws" {
 }
 
-variable "private_subnet_id" {
-  description = "The ID of the private subnet where the EC2 instance will run"
-  type        = string
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 }
 
-variable "mongodb_admin_user" {
-  description = "MongoDB admin username"
-  type        = string
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "eu-north-1a"
+  map_public_ip_on_launch = true
 }
 
-variable "mongodb_admin_password" {
-  description = "MongoDB admin password"
-  type        = string
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "eu-north-1a"
 }
 
-variable "public_subnet_id" {
-  description = "The ID of the public subnet where the Bastion instance will run"
-  type        = string
+resource "aws_security_group" "mongodb_sg" {
+  name        = "mongodb-sg"
+  description = "Allow MongoDB traffic"
+  vpc_id      = aws_vpc.main.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 27017
+    to_port     = 27017
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
 }
 
-variable "mongodb_s3_bucket" {
-  description = "The name of the S3 bucket for MongoDB backups"
-  type        = string
-}
-
-variable "vpc_cidr" {
-  description = "The CIDR block of the VPC"
-  type        = string
-}
-
-module "network" {
-  source = "./modules/network"
+resource "aws_s3_bucket" "mongodb_backup" {
+  bucket = "mongodb-backup-bucket-unique-12345"
 }
 
 module "ec2-mongodb" {
   source            = "./modules/ec2-mongodb"
-  vpc_id            = var.vpc_id
-  private_subnet_id = var.private_subnet_id
-  public_subnet_id  = var.public_subnet_id
-  mongodb_s3_bucket = var.mongodb_s3_bucket
-  vpc_cidr          = var.vpc_cidr
-  mongodb_admin_user = var.mongodb_admin_user
-  mongodb_admin_password = var.mongodb_admin_password
-}
-
-output "mongodb_instance_id" {
-  value = module.ec2-mongodb.mongodb_instance_id
-}
-
-output "bastion_public_ip" {
-  value = module.ec2-mongodb.bastion_public_ip
-}
-
-output "mongodb_s3_bucket_name" {
-  value = module.ec2-mongodb.mongodb_s3_bucket
-}
+  vpc_id            = aws_vpc.main.id
+  private_subnet_id = aws_subnet.private.id
+  public_subnet_id  = aws_subnet.public.id
+  mongodb_s3_bucket = aws_s3_bucket.mongodb_backup.id
 
