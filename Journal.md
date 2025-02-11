@@ -36,3 +36,7 @@ Lets go! Focus on VPC. Done, not a lot of constraints. Find a template on google
 Also registered domain, so got that out of the way. The domain is `vince-techchallenge.com` and cost 14 dollars. Registered using AWS s3 so I don't have to fix the DNS-servers. 
 Decided not to use terraform, not worth the hassle. Will likely regret this down the road.
 
+Setting the Ec2-instance was okay, again - find a template and modify accordingly. Made a critical mistake in the directory structuree by using a recursive touch to create main.tf,
+variables.tf and output.tf while I was in a sub-directory of the root.  Heh.
+
+Important//TODO -- MongoDB is now manually installed by leveraging a user-script. Should probably add checks for that in the runner.
