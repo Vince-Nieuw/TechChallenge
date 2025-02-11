@@ -1,43 +1,3 @@
-name: Terraform CI/CD Pipeline
-
-on:
-  push:
-    branches:
-      - dev     # Runs validation only
-      - main    # Runs full deployment
-      - destroy # Runs Terraform destroy
-  workflow_dispatch:  # Allows manual execution
-
-jobs:
-  terraform-validate:
-    name: "Terraform Validate (Dev & Main)"
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.4.6
-
-      - name: Initialize Terraform
-        working-directory: terraform
-        run: terraform init
-
-      - name: Validate Terraform Configuration
-        working-directory: terraform
-        run: terraform validate
-
   terraform-deploy:
     name: "Terraform Deploy (Main)"
     runs-on: ubuntu-latest
@@ -55,6 +15,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
+      - name: Inject MongoDB Credentials into terraform.tfvars
+        working-directory: terraform
+        run: |
+          echo 'mongodb_admin_user = "${{ secrets.MONGODB_ADMIN_USER }}"' >> terraform.tfvars
+          echo 'mongodb_admin_password = "${{ secrets.MONGODB_ADMIN_PASSWORD }}"' >> terraform.tfvars
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -66,37 +32,9 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform
-        run: terraform plan -out=tfplan
+        run: terraform plan -var-file="terraform.tfvars" -out=tfplan
 
       - name: Terraform Apply
         working-directory: terraform
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve -var-file="terraform.tfvars" tfplan
 
-  terraform-destroy:
-    name: "Terraform Destroy (Destroy Branch)"
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/destroy' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.4.6
-
-      - name: Initialize Terraform
-        working-directory: terraform
-        run: terraform init
-
-      - name: Destroy Terraform Infrastructure
-        working-directory: terraform
-        run: terraform destroy -auto-approve
