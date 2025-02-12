@@ -8,8 +8,8 @@ Build status
 
 ## 🔹 Phase 1: VPC & Networking Setup
 Goal: Set up a VPC with one public and one private subnet to serve as the foundation for the infrastructure.
-✅ Create a VPC  
-✅ Create Public and Private Subnets  
+✅ Create a VPC <br>
+✅ Create Public and Private Subnets <br>
 ✅ Set up an Internet Gateway (for the public subnet)  
 ✅ Set up a NAT Gateway (for private subnet outbound traffic) \ 
 ✅ Create Route Tables and associate them with the correct subnets \
