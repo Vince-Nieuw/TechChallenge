@@ -2,8 +2,6 @@
 #  VPC Creation
 # ===========================
 
-# 12 feb - updated to reflect needed networks for EKS (2 subnets in 2 AZ's.)
-
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -65,7 +63,41 @@ resource "aws_subnet" "private_2" {
 }
 
 # ===========================
-#  Outputs
+#  Security Groups
+# ===========================
+
+resource "aws_security_group" "mongodb_sg" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 27017
+    to_port     = 27017
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]  # Allow only VPC traffic
+  }
+
+  tags = {
+    Name = "MongoDB-SG"
+  }
+}
+
+resource "aws_security_group" "bastion_sg" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Allow SSH from anywhere
+  }
+
+  tags = {
+    Name = "Bastion-SG"
+  }
+}
+
+# ===========================
+#  Outputs (Only If Required)
 # ===========================
 
 output "vpc_id" {
@@ -86,5 +118,13 @@ output "private_subnet_id_1" {
 
 output "private_subnet_id_2" {
   value = aws_subnet.private_2.id
+}
+
+output "mongodb_sg_id" {
+  value = aws_security_group.mongodb_sg.id
+}
+
+output "bastion_sg_id" {
+  value = aws_security_group.bastion_sg.id
 }
 
