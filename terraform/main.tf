@@ -43,7 +43,7 @@ resource "aws_vpc" "main" {
 }
 
 # ===========================
-#  Public Subnets (For Bastion)
+#  Public Subnets (For Bastion and MongoDB)
 # ===========================
 
 resource "aws_subnet" "public_1" {
@@ -69,7 +69,7 @@ resource "aws_subnet" "public_2" {
 }
 
 # ===========================
-#  Private Subnets (For MongoDB)
+#  Private Subnets
 # ===========================
 
 resource "aws_subnet" "private_1" {
@@ -107,12 +107,12 @@ resource "aws_security_group" "mongodb_sg" {
     cidr_blocks = ["10.0.0.0/16"]  # Allow traffic only from VPC
   }
 
-  # Ingress rule for SSH (port 22) from Bastion host only
+  # Ingress rule for SSH (port 22) from everyone
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${aws_instance.bastion.private_ip}/32"]  # Allow SSH from Bastion host's private IP
+    cidr_blocks = ["0.0.0.0/0"]  # Allow SSH from anywhere
   }
 
   # Outbound rule for all traffic to anywhere (0.0.0.0/0)
@@ -161,15 +161,66 @@ resource "aws_key_pair" "my_ssh_key" {
 }
 
 # ===========================
+#  IAM Role and Policy for MongoDB Instance
+# ===========================
+
+resource "aws_iam_role" "mongodb_role" {
+  name = "mongodb-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "MongoDB-Role"
+  }
+}
+
+resource "aws_iam_policy" "mongodb_policy" {
+  name        = "mongodb-policy"
+  description = "Policy to allow EC2 actions"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "ec2:*"
+        Effect = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "mongodb_policy_attachment" {
+  role       = aws_iam_role.mongodb_role.name
+  policy_arn = aws_iam_policy.mongodb_policy.arn
+}
+
+resource "aws_iam_instance_profile" "mongodb_instance_profile" {
+  name = "mongodb-instance-profile"
+  role = aws_iam_role.mongodb_role.name
+}
+
+# ===========================
 #  MongoDB EC2 Instance
 # ===========================
 
 resource "aws_instance" "mongodb" {
   ami                    = "ami-04b4f1a9cf54c11d0"
   instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.private_1.id
+  subnet_id              = aws_subnet.public_1.id  # Change to public subnet
   vpc_security_group_ids = [aws_security_group.mongodb_sg.id]
   key_name               = aws_key_pair.my_ssh_key.key_name  # Use the key pair created by Terraform
+  iam_instance_profile   = aws_iam_instance_profile.mongodb_instance_profile.name  # Attach IAM instance profile
 
   tags = {
     Name = "MongoDB-Server"
@@ -301,4 +352,3 @@ resource "aws_route_table_association" "public_subnet_2" {
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
-
