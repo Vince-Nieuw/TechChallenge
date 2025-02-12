@@ -2,7 +2,7 @@
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
   cluster_name = "web-application-cluster"
-  cluster_version = "1.21"
+  cluster_version = "1.27"
   subnet_ids = [var.public_subnet_id, var.private_subnet_id]
   vpc_id = var.vpc_id
   eks_managed_node_groups = {

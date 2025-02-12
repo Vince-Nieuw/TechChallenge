@@ -7,9 +7,13 @@ variable "bucket_name" {
   type        = string
 }
 
+
 # ===========================
 #  S3 Bucket for MongoDB Backups
 # ===========================
+#
+# Note - Re-using this bucket for AWS config as well. 
+#
 
 resource "aws_s3_bucket" "mongodb_backup" {
   bucket        = var.bucket_name
@@ -20,21 +24,20 @@ resource "aws_s3_bucket" "mongodb_backup" {
   }
 }
 
-# Disable Block Public Access for the S3 Bucket
-resource "aws_s3_bucket_public_access_block" "mongodb_backup_access" {
-  bucket                  = aws_s3_bucket.mongodb_backup.id
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# Ensure objects in the bucket are publicly accessible
 resource "aws_s3_bucket_policy" "mongodb_backup_policy" {
   bucket = aws_s3_bucket.mongodb_backup.id
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "config.amazonaws.com"
+        },
+        Action   = "s3:PutObject",
+        Resource = "${aws_s3_bucket.mongodb_backup.arn}/*"
+      },
       {
         Effect    = "Allow",
         Principal = "*",
@@ -43,6 +46,15 @@ resource "aws_s3_bucket_policy" "mongodb_backup_policy" {
       }
     ]
   })
+}
+
+# Hope this works, if not --> manually disable bucket access through GUI
+resource "aws_s3_bucket_public_access_block" "mongodb_backup_access" {
+  bucket                  = aws_s3_bucket.mongodb_backup.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 # ===========================
