@@ -1,19 +1,20 @@
 # ===========================
-#  Variables
+#  Create a KMS Key for AWS Config Logs
 # ===========================
 
-variable "bucket_name" {
-  description = "The name of the S3 bucket for MongoDB backups"
-  type        = string
+resource "aws_kms_key" "s3_config_logs" {
+  description             = "KMS key for encrypting AWS Config logs"
+  enable_key_rotation     = true
 }
 
+resource "aws_kms_alias" "s3_config_logs_alias" {
+  name          = "alias/s3-config-logs"
+  target_key_id = aws_kms_key.s3_config_logs.id
+}
 
 # ===========================
-#  S3 Bucket for MongoDB Backups
+#  S3 Bucket for MongoDB Backups & AWS Config Logs
 # ===========================
-#
-# Note - Re-using this bucket for AWS config as well. 
-#
 
 resource "aws_s3_bucket" "mongodb_backup" {
   bucket        = var.bucket_name
@@ -23,6 +24,9 @@ resource "aws_s3_bucket" "mongodb_backup" {
     Name = "MongoDB Backup Bucket"
   }
 }
+
+# Using KMS key as using IAM policies will be perceived as a hack. 
+data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket_policy" "mongodb_backup_policy" {
   bucket = aws_s3_bucket.mongodb_backup.id
@@ -36,7 +40,13 @@ resource "aws_s3_bucket_policy" "mongodb_backup_policy" {
           Service = "config.amazonaws.com"
         },
         Action   = "s3:PutObject",
-        Resource = "${aws_s3_bucket.mongodb_backup.arn}/*"
+        Resource = "${aws_s3_bucket.mongodb_backup.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/Config/*",
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-server-side-encryption" = "aws:kms",
+            "s3:x-amz-server-side-encryption-aws-kms-key-id" = aws_kms_key.s3_config_logs.arn
+          }
+        }
       },
       {
         Effect    = "Allow",
@@ -48,7 +58,6 @@ resource "aws_s3_bucket_policy" "mongodb_backup_policy" {
   })
 }
 
-# Hope this works, if not --> manually disable bucket access through GUI
 resource "aws_s3_bucket_public_access_block" "mongodb_backup_access" {
   bucket                  = aws_s3_bucket.mongodb_backup.id
   block_public_acls       = false
@@ -57,11 +66,28 @@ resource "aws_s3_bucket_public_access_block" "mongodb_backup_access" {
   restrict_public_buckets = false
 }
 
+resource "aws_s3_bucket_ownership_controls" "mongodb_backup_ownership" {
+  bucket = aws_s3_bucket.mongodb_backup.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "mongodb_backup_acl" {
+  bucket = aws_s3_bucket.mongodb_backup.id
+  acl    = "private"
+}
+
 # ===========================
 #  Outputs
 # ===========================
 
 output "s3_bucket_name" {
   value = aws_s3_bucket.mongodb_backup.id
+}
+
+output "kms_key_arn" {
+  value = aws_kms_key.s3_config_logs.arn
 }
 
