@@ -17,7 +17,7 @@ resource "aws_kms_alias" "s3_config_logs_alias" {
 # ===========================
 
 resource "aws_s3_bucket" "mongodb_backup" {
-  bucket        = var.bucket_name
+  bucket        = "mongodb-backup-bucket-unique-12345" # //TODO
   force_destroy = true  # Allows the bucket to be deleted with Terraform
 
   tags = {
